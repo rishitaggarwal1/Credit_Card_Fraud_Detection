@@ -1,4 +1,7 @@
 # importing libraries
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.ensemble import IsolationForest
+from sklearn.metrics import classification_report, accuracy_score
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -63,3 +66,40 @@ Y = data[target]
 
 print(X.shape)
 print(Y.shape)
+
+
+# define the random state
+state = 1
+
+# define the outlier detection methods
+classifiers = {
+    "Isolation Forest": IsolationForest(max_samples=len(X),
+                                        contamination=frac,
+                                        random_state=state),
+    "Local Outlier Factor": LocalOutlierFactor(
+        n_neighbors=20,
+        contamination=frac)
+}
+
+
+# fit the model
+n_outliers = len(fraud)
+
+for i, (clf_name, clf) in enumerate(classifiers.items()):
+
+    if clf_name == "Local Outlier Factor":
+        y_pred = clf.fit_predict(X)
+        scores_pred = clf.negative_outlier_factor_
+    else:
+        clf.fit(X)
+        scores_pred = clf.decision_function(X)
+        y_pred = clf.predict(X)
+    y_pred[y_pred == 1] = 0
+    y_pred[y_pred == -1] = 1
+
+    n_errors = (y_pred != Y).sum()
+
+    # run the classification
+    print('{}: {}'.format(clf_name, n_errors))
+    print(accuracy_score(Y, y_pred))
+    print(classification_report(Y, y_pred))
